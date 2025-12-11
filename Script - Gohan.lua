@@ -48,20 +48,19 @@ end
 local buttonCircle = Instance.new("ImageButton")
 buttonCircle.Size = UDim2.new(0, 80, 0, 80)
 buttonCircle.Position = UDim2.new(1, -100, 0, 20) -- canto superior direito
-buttonCircle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+buttonCircle.BackgroundColor3 = Color3.fromRGB(0,0,0)
 buttonCircle.Image = "rbxassetid://631940830"
 buttonCircle.BorderSizePixel = 3
 buttonCircle.BorderColor3 = Color3.new(0,0,0)
 buttonCircle.Parent = screenGui
-buttonCircle.ZIndex = 10
 local circleCorner = Instance.new("UICorner", buttonCircle)
 circleCorner.CornerRadius = UDim.new(1,0)
 makeDraggable(buttonCircle)
 
 -- MENU RETANGULAR
 local menuFrame = Instance.new("Frame")
-menuFrame.Size = UDim2.new(0, 320, 0, 420)
-menuFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+menuFrame.Size = UDim2.new(0, 320, 0, 450)
+menuFrame.Position = UDim2.new(0.5, -160, 0.5, -225)
 menuFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
 menuFrame.BorderColor3 = Color3.new(1,1,1)
 menuFrame.BorderSizePixel = 2
@@ -69,7 +68,7 @@ menuFrame.Visible = false
 menuFrame.Parent = screenGui
 makeDraggable(menuFrame)
 
--- Título
+-- TÍTULO
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1,0,0,35)
 title.Position = UDim2.new(0,0,0,0)
@@ -80,11 +79,11 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 24
 title.Parent = menuFrame
 
--- FUNÇÃO SLIDER COM + e -
-local function createSlider(parent, name, min, max, default, callback)
+-- Função para criar sliders
+local function createSlider(parent, name, min, max, default, callback, offset)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -20, 0, 70)
-    frame.Position = UDim2.new(0,10,0,#parent:GetChildren()*70)
+    frame.Position = UDim2.new(0, 10, 0, offset)
     frame.BackgroundTransparency = 1
     frame.Parent = parent
 
@@ -137,6 +136,7 @@ local function createSlider(parent, name, min, max, default, callback)
         end
     end)
 
+    -- Botão + e -
     local plus = Instance.new("TextButton")
     plus.Size = UDim2.new(0,25,0,25)
     plus.Position = UDim2.new(0.75,45,0,28)
@@ -170,25 +170,26 @@ local function createSlider(parent, name, min, max, default, callback)
     end)
 end
 
--- SPEED
-createSlider(menuFrame, "Speed", 16, 500, 16, function(val)
+-- SPEED (-50 a 500)
+createSlider(menuFrame,"Speed",-50,500,16,function(val)
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = val
     end
-end)
+end,50)
 
--- SIZE
-createSlider(menuFrame, "Size", 1, 10, 1, function(val)
+-- SIZE (-5 a 10)
+createSlider(menuFrame,"Size",-5,10,1,function(val)
     if LocalPlayer.Character then
         for _, p in ipairs(LocalPlayer.Character:GetChildren()) do
             if p:IsA("BasePart") then
-                p.Size = Vector3.new(val,val,val)
+                local v = math.max(0.1,val)
+                p.Size = Vector3.new(v,v,v)
             end
         end
     end
-end)
+end,130)
 
--- AIMBOT
+-- AIMBOT (0 a 100)
 local aimbotValue = 0
 local aiming = false
 local function closest()
@@ -210,7 +211,7 @@ local function closest()
     return target
 end
 
-createSlider(menuFrame, "Aimbot", 0, 100, 0, function(val)
+createSlider(menuFrame,"Aimbot",0,100,0,function(val)
     aimbotValue = val
     if val == 0 then
         aiming = false
@@ -223,17 +224,29 @@ createSlider(menuFrame, "Aimbot", 0, 100, 0, function(val)
             local tgt = closest()
             if tgt and tgt.Character and tgt.Character:FindFirstChild("Head") then
                 local newCF = CFrame.new(Camera.CFrame.Position, tgt.Character.Head.Position)
-                Camera.CFrame = Camera.CFrame:Lerp(newCF, aimbotValue/100)
+                Camera.CFrame = Camera.CFrame:Lerp(newCF,aimbotValue/100)
             end
         end)
     end
-end)
+end,210)
 
 -- IMORTAL ON/OFF
 local imortal = false
-local function toggleImortal()
+local imortalBtn = Instance.new("TextButton")
+imortalBtn.Size = UDim2.new(1,-20,0,50)
+imortalBtn.Position = UDim2.new(0,10,0,300)
+imortalBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+imortalBtn.Text = "Imortal (OFF)"
+imortalBtn.TextColor3 = Color3.new(1,1,1)
+imortalBtn.Font = Enum.Font.GothamBold
+imortalBtn.TextSize = 20
+imortalBtn.Parent = menuFrame
+
+imortalBtn.MouseButton1Click:Connect(function()
     imortal = not imortal
     if imortal then
+        imortalBtn.BackgroundColor3 = Color3.fromRGB(0,255,0)
+        imortalBtn.Text = "Imortal (ON)"
         task.spawn(function()
             while imortal do
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -242,24 +255,11 @@ local function toggleImortal()
                 task.wait(0.001)
             end
         end)
+    else
+        imortalBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+        imortalBtn.Text = "Imortal (OFF)"
     end
-end
-
-local function createButton(parent,name,callback)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1,-20,0,45)
-    btn.Position = UDim2.new(0,10,0,#parent:GetChildren()*60)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.BorderColor3 = Color3.new(1,1,1)
-    btn.Text = name
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 20
-    btn.Parent = parent
-    btn.MouseButton1Click:Connect(callback)
-end
-
-createButton(menuFrame,"Imortal (ON/OFF)",toggleImortal)
+end)
 
 -- ABRIR / FECHAR MENU
 buttonCircle.MouseButton1Click:Connect(function()
