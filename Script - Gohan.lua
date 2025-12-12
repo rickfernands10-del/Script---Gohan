@@ -1,4 +1,4 @@
---// GUI COMPLETO - SCRIPT GOHAN
+--// GUI COMPLETO - SCRIPT GOHAN COM ESP
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -6,13 +6,9 @@ local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 
--- ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "GohanGUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
+-- =====================================
 -- FUNÇÃO PARA ARRASTAR GUI
+-- =====================================
 local function makeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
     local function update(input)
@@ -44,10 +40,18 @@ local function makeDraggable(frame)
     end)
 end
 
--- CÍRCULO BOTÃO
+-- =====================================
+-- SCREEN GUI
+-- =====================================
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "GohanGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- BOTÃO CÍRCULO PARA ABRIR MENU
 local buttonCircle = Instance.new("ImageButton")
 buttonCircle.Size = UDim2.new(0, 80, 0, 80)
-buttonCircle.Position = UDim2.new(1, -100, 0, 20) -- canto superior direito
+buttonCircle.Position = UDim2.new(1, -100, 0, 20)
 buttonCircle.BackgroundColor3 = Color3.fromRGB(0,0,0)
 buttonCircle.Image = "rbxassetid://631940830"
 buttonCircle.BorderSizePixel = 3
@@ -59,8 +63,8 @@ makeDraggable(buttonCircle)
 
 -- MENU RETANGULAR
 local menuFrame = Instance.new("Frame")
-menuFrame.Size = UDim2.new(0, 320, 0, 450)
-menuFrame.Position = UDim2.new(0.5, -160, 0.5, -225)
+menuFrame.Size = UDim2.new(0, 350, 0, 500)
+menuFrame.Position = UDim2.new(0.5, -175, 0.5, -250)
 menuFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
 menuFrame.BorderColor3 = Color3.new(1,1,1)
 menuFrame.BorderSizePixel = 2
@@ -79,7 +83,9 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 24
 title.Parent = menuFrame
 
--- Função para criar sliders
+-- =====================================
+-- FUNÇÃO PARA SLIDERS
+-- =====================================
 local function createSlider(parent, name, min, max, default, callback, offset)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -20, 0, 70)
@@ -170,14 +176,79 @@ local function createSlider(parent, name, min, max, default, callback, offset)
     end)
 end
 
--- SPEED (-50 a 500)
+-- =====================================
+-- ESP CONFIGURAÇÕES
+-- =====================================
+local espEnabled = false
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(1,-20,0,50)
+espButton.Position = UDim2.new(0,10,0,80)
+espButton.BackgroundColor3 = Color3.fromRGB(0,170,255)
+espButton.Text = "ESP (OFF)"
+espButton.TextColor3 = Color3.new(1,1,1)
+espButton.Font = Enum.Font.GothamBold
+espButton.TextSize = 20
+espButton.Parent = menuFrame
+
+-- FUNÇÃO ESP
+local espHighlights = {}
+
+local function toggleESP(state)
+    espEnabled = state
+    espButton.Text = state and "ESP (ON)" or "ESP (OFF)"
+    if state then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                local char = player.Character
+                if not espHighlights[char] then
+                    local hl = Instance.new("Highlight")
+                    hl.FillColor = Color3.fromRGB(0,255,255)
+                    hl.OutlineColor = Color3.fromRGB(255,255,255)
+                    hl.FillTransparency = 0.5
+                    hl.OutlineTransparency = 0
+                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    hl.Parent = char
+                    espHighlights[char] = hl
+                end
+            end
+        end
+    else
+        for _, hl in pairs(espHighlights) do
+            if hl and hl.Parent then hl:Destroy() end
+        end
+        espHighlights = {}
+    end
+end
+
+espButton.MouseButton1Click:Connect(function()
+    toggleESP(not espEnabled)
+end)
+
+-- Atualiza ESP para novos jogadores
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(char)
+        if espEnabled then
+            local hl = Instance.new("Highlight")
+            hl.FillColor = Color3.fromRGB(0,255,255)
+            hl.OutlineColor = Color3.fromRGB(255,255,255)
+            hl.FillTransparency = 0.5
+            hl.OutlineTransparency = 0
+            hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            hl.Parent = char
+            espHighlights[char] = hl
+        end
+    end)
+end)
+
+-- =====================================
+-- SLIDERS EXISTENTES
+-- =====================================
 createSlider(menuFrame,"Speed",-50,500,16,function(val)
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = val
     end
 end,50)
 
--- SIZE (-5 a 10)
 createSlider(menuFrame,"Size",-5,10,1,function(val)
     if LocalPlayer.Character then
         for _, p in ipairs(LocalPlayer.Character:GetChildren()) do
@@ -189,7 +260,12 @@ createSlider(menuFrame,"Size",-5,10,1,function(val)
     end
 end,130)
 
--- AIMBOT (0 a 100)
+-- FOV
+createSlider(menuFrame,"FOV",1,200,70,function(val)
+    Camera.FieldOfView = val
+end,190)
+
+-- AIMBOT
 local aimbotValue = 0
 local aiming = false
 local function closest()
