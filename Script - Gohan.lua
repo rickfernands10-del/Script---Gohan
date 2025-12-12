@@ -1,4 +1,4 @@
---// GUI COMPLETO - SCRIPT GOHAN COM BRINGTOME
+--// GUI COMPLETO - SCRIPT GOHAN COM BRINGTOME E ESP
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -47,7 +47,7 @@ end
 -- CÍRCULO BOTÃO
 local buttonCircle = Instance.new("ImageButton")
 buttonCircle.Size = UDim2.new(0, 80, 0, 80)
-buttonCircle.Position = UDim2.new(1, -100, 0, 20) -- canto superior direito
+buttonCircle.Position = UDim2.new(1, -100, 0, 20)
 buttonCircle.BackgroundColor3 = Color3.fromRGB(0,0,0)
 buttonCircle.Image = "rbxassetid://631940830"
 buttonCircle.BorderSizePixel = 3
@@ -59,8 +59,8 @@ makeDraggable(buttonCircle)
 
 -- MENU RETANGULAR
 local menuFrame = Instance.new("Frame")
-menuFrame.Size = UDim2.new(0, 320, 0, 500)
-menuFrame.Position = UDim2.new(0.5, -160, 0.5, -250)
+menuFrame.Size = UDim2.new(0, 300, 0, 400) -- menor
+menuFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
 menuFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
 menuFrame.BorderColor3 = Color3.new(1,1,1)
 menuFrame.BorderSizePixel = 2
@@ -170,25 +170,6 @@ local function createSlider(parent, name, min, max, default, callback, offset)
     end)
 end
 
--- SPEED (-50 a 500)
-createSlider(menuFrame,"Speed",-50,500,16,function(val)
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = val
-    end
-end,50)
-
--- SIZE (-5 a 10)
-createSlider(menuFrame,"Size",-5,10,1,function(val)
-    if LocalPlayer.Character then
-        for _, p in ipairs(LocalPlayer.Character:GetChildren()) do
-            if p:IsA("BasePart") then
-                local v = math.max(0.1,val)
-                p.Size = Vector3.new(v,v,v)
-            end
-        end
-    end
-end,130)
-
 -- AIMBOT (0 a 100)
 local aimbotValue = 0
 local aiming = false
@@ -228,15 +209,15 @@ createSlider(menuFrame,"Aimbot",0,100,0,function(val)
             end
         end)
     end
-end,210)
+end,50)
 
 -- IMORTAL ON/OFF
 local imortal = false
 local imortalBtn = Instance.new("TextButton")
-imortalBtn.Size = UDim2.new(1,-20,0,50)
-imortalBtn.Position = UDim2.new(0,10,0,300)
+imortalBtn.Size = UDim2.new(1,-20,0,40)
+imortalBtn.Position = UDim2.new(0,10,0,100)
 imortalBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
-imortalBtn.Text = "Imortal (OFF)"
+imortalBtn.Text = "Regeneration (OFF)"
 imortalBtn.TextColor3 = Color3.new(1,1,1)
 imortalBtn.Font = Enum.Font.GothamBold
 imortalBtn.TextSize = 20
@@ -246,26 +227,26 @@ imortalBtn.MouseButton1Click:Connect(function()
     imortal = not imortal
     if imortal then
         imortalBtn.BackgroundColor3 = Color3.fromRGB(0,255,0)
-        imortalBtn.Text = "Imortal (ON)"
+        imortalBtn.Text = "Regeneration (ON)"
         task.spawn(function()
             while imortal do
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                    LocalPlayer.Character.Humanoid.Health = 1000
+                    LocalPlayer.Character.Humanoid.Health = 10000
                 end
                 task.wait(0.001)
             end
         end)
     else
         imortalBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
-        imortalBtn.Text = "Imortal (OFF)"
+        imortalBtn.Text = "Regeneration (OFF)"
     end
 end)
 
 -- BRINGTOME ON/OFF
 local bringActive = false
 local bringBtn = Instance.new("TextButton")
-bringBtn.Size = UDim2.new(1,-20,0,50)
-bringBtn.Position = UDim2.new(0,10,0,360)
+bringBtn.Size = UDim2.new(1,-20,0,40)
+bringBtn.Position = UDim2.new(0,10,0,150)
 bringBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
 bringBtn.Text = "BringToMe (OFF)"
 bringBtn.TextColor3 = Color3.new(1,1,1)
@@ -284,17 +265,108 @@ bringBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Loop BringToMe
+-- ESP ON/OFF
+local espActive = false
+local espBtn = Instance.new("TextButton")
+espBtn.Size = UDim2.new(1,-20,0,40)
+espBtn.Position = UDim2.new(0,10,0,200)
+espBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+espBtn.Text = "ESP Players (OFF)"
+espBtn.TextColor3 = Color3.new(1,1,1)
+espBtn.Font = Enum.Font.GothamBold
+espBtn.TextSize = 20
+espBtn.Parent = menuFrame
+
+espBtn.MouseButton1Click:Connect(function()
+    espActive = not espActive
+    if espActive then
+        espBtn.BackgroundColor3 = Color3.fromRGB(0,255,0)
+        espBtn.Text = "ESP Players (ON)"
+    else
+        espBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+        espBtn.Text = "ESP Players (OFF)"
+    end
+end)
+
+-- Função ESP
+local espData = {}
+local function createESP(player)
+    if player == LocalPlayer then return end
+    player.CharacterAdded:Connect(function(char)
+        repeat task.wait() until char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Head")
+        
+        if espData[char] then
+            espData[char]:Destroy()
+            espData[char] = nil
+        end
+        if not espActive then return end
+
+        local hl = Instance.new("Highlight")
+        hl.FillColor = Color3.fromRGB(0,255,255)
+        hl.OutlineColor = Color3.fromRGB(255,255,255)
+        hl.FillTransparency = 0.5
+        hl.OutlineTransparency = 0
+        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        hl.Adornee = char
+        hl.Parent = char
+        espData[char] = hl
+
+        local bill = Instance.new("BillboardGui")
+        bill.Name = "ESP_Billboard"
+        bill.Adornee = char.Head
+        bill.AlwaysOnTop = true
+        bill.Size = UDim2.new(4,0,2,0)
+        bill.StudsOffset = Vector3.new(0,3,0)
+        bill.Parent = char.Head
+
+        local frame = Instance.new("Frame", bill)
+        frame.Size = UDim2.new(1,0,1,0)
+        frame.BackgroundTransparency = 1
+
+        local image = Instance.new("ImageLabel", frame)
+        image.Size = UDim2.new(0.35,0,1,0)
+        image.Position = UDim2.new(0,0,0,0)
+        image.BackgroundTransparency = 1
+        local thumb, isReady = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+        if isReady then
+            image.Image = thumb
+        end
+
+        local text = Instance.new("TextLabel", frame)
+        text.Size = UDim2.new(0.65,0,1,0)
+        text.Position = UDim2.new(0.35,0,0,0)
+        text.BackgroundTransparency = 1
+        text.TextColor3 = Color3.new(1,1,1)
+        text.TextScaled = true
+        text.Font = Enum.Font.GothamBold
+        text.Text = player.Name
+
+        task.spawn(function()
+            while char.Parent and espActive do
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    text.Text = player.Name .. "\n" .. math.floor(dist) .. "m"
+                end
+                task.wait(0.5)
+            end
+        end)
+    end)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    createESP(p)
+end
+Players.PlayerAdded:Connect(createESP)
+
+-- LOOP BringToMe
 RunService.RenderStepped:Connect(function()
-    if not bringActive then return end
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-    
-    local myPos = LocalPlayer.Character.HumanoidRootPart.CFrame + (Camera.CFrame.LookVector * 5)
-    
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = player.Character.HumanoidRootPart
-            hrp.CFrame = CFrame.new(myPos.Position)
+    if bringActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local myPos = LocalPlayer.Character.HumanoidRootPart.CFrame + (Camera.CFrame.LookVector * 5)
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                player.Character.HumanoidRootPart.CFrame = CFrame.new(myPos.Position)
+            end
         end
     end
 end)
