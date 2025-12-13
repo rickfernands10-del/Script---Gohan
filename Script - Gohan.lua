@@ -170,46 +170,94 @@ local function createSlider(parent, name, min, max, default, callback, offset)
     end)
 end
 
--- AIMBOT (0 a 100)
+--==================================================
+-- AIMBOT ATUALIZADO (R6 / R15 / ANTI-GRUDAR)
+--==================================================
+
 local aimbotValue = 0
 local aiming = false
-local function closest()
+local AIM_RENDER_NAME = "Aimbot_SHMuser0"
+
+-- CONFIG
+local AIM_VERTICAL_REDUCE = 0.4 -- 40% menos puxão vertical
+
+-- Função: pega a cabeça (R6 e R15)
+local function getHead(char)
+    return char:FindFirstChild("Head")
+end
+
+-- Função: pega humanoid válido (vivo)
+local function getHumanoid(char)
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if hum and hum.Health > 0 then
+        return hum
+    end
+end
+
+-- Função: sempre acha o MAIS PRÓXIMO (atualiza sempre)
+local function getClosestTarget()
     local cam = workspace.CurrentCamera
-    local target, dist = nil, math.huge
+    local closestPlayer = nil
+    local shortestDist = math.huge
+
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
-            local head = p.Character.Head
-            local screenPos, onScreen = cam:WorldToViewportPoint(head.Position)
-            if onScreen then
-                local d = (Vector2.new(screenPos.X,screenPos.Y)-(cam.ViewportSize/2)).Magnitude
-                if d<dist then
-                    dist = d
-                    target = p
+        if p ~= LocalPlayer and p.Character then
+            local hum = getHumanoid(p.Character)
+            local head = getHead(p.Character)
+
+            if hum and head then
+                local screenPos, onScreen = cam:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - cam.ViewportSize / 2).Magnitude
+                    if dist < shortestDist then
+                        shortestDist = dist
+                        closestPlayer = p
+                    end
                 end
             end
         end
     end
-    return target
+
+    return closestPlayer
 end
 
-createSlider(menuFrame,"Aimbot",0,100,0,function(val)
+-- SLIDER DO AIMBOT
+createSlider(menuFrame, "Aimbot", 0, 100, 0, function(val)
     aimbotValue = val
+
     if val == 0 then
         aiming = false
-        RunService:UnbindFromRenderStep("Aimbot")
+        RunService:UnbindFromRenderStep(AIM_RENDER_NAME)
         return
     end
-    if not aiming then
-        aiming = true
-        RunService:BindToRenderStep("Aimbot",1,function()
-            local tgt = closest()
-            if tgt and tgt.Character and tgt.Character:FindFirstChild("Head") then
-                local newCF = CFrame.new(Camera.CFrame.Position, tgt.Character.Head.Position)
-                Camera.CFrame = Camera.CFrame:Lerp(newCF,aimbotValue/100)
-            end
-        end)
-    end
-end,50)
+
+    if aiming then return end
+    aiming = true
+
+    RunService:BindToRenderStep(AIM_RENDER_NAME, Enum.RenderPriority.Camera.Value + 1, function()
+        local target = getClosestTarget()
+        if not target then return end
+
+        local char = target.Character
+        local head = char and getHead(char)
+        if not head then return end
+
+        local cam = workspace.CurrentCamera
+        local camPos = cam.CFrame.Position
+
+        -- Reduz o movimento vertical (anti-pinar)
+        local targetPos = head.Position
+        local deltaY = targetPos.Y - camPos.Y
+        targetPos = Vector3.new(
+            targetPos.X,
+            camPos.Y + (deltaY * (1 - AIM_VERTICAL_REDUCE)),
+            targetPos.Z
+        )
+
+        local newCF = CFrame.new(camPos, targetPos)
+        cam.CFrame = cam.CFrame:Lerp(newCF, aimbotValue / 100)
+    end)
+end, 50)
 
 -- IMORTAL ON/OFF
 local imortal = false
