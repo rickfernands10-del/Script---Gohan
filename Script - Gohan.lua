@@ -1,425 +1,160 @@
---// GUI COMPLETO - SCRIPT GOHAN COM BRINGTOME E ESP
+--// GOHAN ULTIMATE SCRIPT (UNIFICADO + MELHORADO)
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "GohanGUI"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+--==================================================
+-- 🛡️ ANTIFLING
+--==================================================
+RunService.Stepped:Connect(function()
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        local hrp = char.HumanoidRootPart
 
--- FUNÇÃO PARA ARRASTAR GUI
-local function makeDraggable(frame)
-    local dragging, dragInput, dragStart, startPos
-    local function update(input)
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                                   startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        if hrp.AssemblyLinearVelocity.Magnitude > 100 then
+            hrp.AssemblyLinearVelocity = Vector3.zero
+        end
+
+        if hrp.AssemblyAngularVelocity.Magnitude > 50 then
+            hrp.AssemblyAngularVelocity = Vector3.zero
+        end
     end
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-    frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-    UIS.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            update(input)
-        end
-    end)
-end
-
--- CÍRCULO BOTÃO
-local buttonCircle = Instance.new("ImageButton")
-buttonCircle.Size = UDim2.new(0, 80, 0, 80)
-buttonCircle.Position = UDim2.new(1, -100, 0, 20)
-buttonCircle.BackgroundColor3 = Color3.fromRGB(0,0,0)
-buttonCircle.Image = "rbxassetid://631940830"
-buttonCircle.BorderSizePixel = 3
-buttonCircle.BorderColor3 = Color3.new(0,0,0)
-buttonCircle.Parent = screenGui
-local circleCorner = Instance.new("UICorner", buttonCircle)
-circleCorner.CornerRadius = UDim.new(1,0)
-makeDraggable(buttonCircle)
-
--- MENU RETANGULAR
-local menuFrame = Instance.new("Frame")
-menuFrame.Size = UDim2.new(0, 300, 0, 400) -- menor
-menuFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-menuFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
-menuFrame.BorderColor3 = Color3.new(1,1,1)
-menuFrame.BorderSizePixel = 2
-menuFrame.Visible = false
-menuFrame.Parent = screenGui
-makeDraggable(menuFrame)
-
--- TÍTULO
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1,0,0,35)
-title.Position = UDim2.new(0,0,0,0)
-title.BackgroundTransparency = 1
-title.Text = "Script - Gohan"
-title.TextColor3 = Color3.new(1,1,1)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 24
-title.Parent = menuFrame
-
--- Função para criar sliders
-local function createSlider(parent, name, min, max, default, callback, offset)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -20, 0, 70)
-    frame.Position = UDim2.new(0, 10, 0, offset)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
-
-    local label = Instance.new("TextLabel")  
-    label.Size = UDim2.new(1,0,0,20)  
-    label.Position = UDim2.new(0,0,0,0)  
-    label.BackgroundTransparency = 1  
-    label.Text = name  
-    label.TextColor3 = Color3.new(1,1,1)  
-    label.Font = Enum.Font.GothamBold  
-    label.TextSize = 18  
-    label.Parent = frame  
-
-    local sliderFrame = Instance.new("Frame")  
-    sliderFrame.Size = UDim2.new(0.7,0,0,22)  
-    sliderFrame.Position = UDim2.new(0,0,0,30)  
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(40,40,40)  
-    sliderFrame.Parent = frame  
-
-    local sliderFill = Instance.new("Frame")  
-    sliderFill.Size = UDim2.new((default-min)/(max-min),0,1,0)  
-    sliderFill.BackgroundColor3 = Color3.fromRGB(200,200,200)  
-    sliderFill.Parent = sliderFrame  
-
-    local valueLabel = Instance.new("TextLabel")  
-    valueLabel.Size = UDim2.new(0,50,1,0)  
-    valueLabel.Position = UDim2.new(1,10,0,0)  
-    valueLabel.BackgroundTransparency = 1  
-    valueLabel.Text = tostring(default)  
-    valueLabel.TextColor3 = Color3.new(1,1,1)  
-    valueLabel.Font = Enum.Font.Gotham  
-    valueLabel.TextSize = 16  
-    valueLabel.Parent = sliderFrame  
-
-    local dragging = false  
-    sliderFrame.InputBegan:Connect(function(input)  
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end  
-    end)  
-    sliderFrame.InputEnded:Connect(function(input)  
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end  
-    end)  
-    UIS.InputChanged:Connect(function(input)  
-        if dragging then  
-            local x = math.clamp(input.Position.X - sliderFrame.AbsolutePosition.X,0,sliderFrame.AbsoluteSize.X)  
-            local pct = x/sliderFrame.AbsoluteSize.X  
-            sliderFill.Size = UDim2.new(pct,0,1,0)  
-            local val = math.floor(min + (max-min)*pct)  
-            valueLabel.Text = val  
-            callback(val)  
-        end  
-    end)  
-
-    -- Botão + e -  
-    local plus = Instance.new("TextButton")  
-    plus.Size = UDim2.new(0,25,0,25)  
-    plus.Position = UDim2.new(0.75,45,0,28)  
-    plus.Text = "+"  
-    plus.BackgroundColor3 = Color3.fromRGB(40,40,40)  
-    plus.TextColor3 = Color3.new(1,1,1)  
-    plus.Font = Enum.Font.GothamBold  
-    plus.TextSize = 20  
-    plus.Parent = frame  
-    plus.MouseButton1Click:Connect(function()  
-        local newVal = math.min(max, tonumber(valueLabel.Text)+1)  
-        valueLabel.Text = newVal  
-        sliderFill.Size = UDim2.new((newVal-min)/(max-min),0,1,0)  
-        callback(newVal)  
-    end)  
-
-    local minus = Instance.new("TextButton")  
-    minus.Size = UDim2.new(0,25,0,25)  
-    minus.Position = UDim2.new(0.75,10,0,28)  
-    minus.Text = "-"  
-    minus.BackgroundColor3 = Color3.fromRGB(40,40,40)  
-    minus.TextColor3 = Color3.new(1,1,1)  
-    minus.Font = Enum.Font.GothamBold  
-    minus.TextSize = 20  
-    minus.Parent = frame  
-    minus.MouseButton1Click:Connect(function()  
-        local newVal = math.max(min, tonumber(valueLabel.Text)-1)  
-        valueLabel.Text = newVal  
-        sliderFill.Size = UDim2.new((newVal-min)/(max-min),0,1,0)  
-        callback(newVal)  
-    end)
-end
+end)
 
 --==================================================
--- AIMBOT ATUALIZADO (R6 / R15 / ANTI-GRUDAR)
+-- 💀 IMORTAL (MELHORADO)
 --==================================================
-
-local aimbotValue = 0
-local aiming = false
-local AIM_RENDER_NAME = "Aimbot_SHMuser0"
-
--- CONFIG
-local AIM_VERTICAL_REDUCE = 0.4 -- 40% menos puxão vertical
-
--- Função: pega a cabeça (R6 e R15)
-local function getHead(char)
-    return char:FindFirstChild("Head")
-end
-
--- Função: pega humanoid válido (vivo)
-local function getHumanoid(char)
-    local hum = char:FindFirstChildOfClass("Humanoid")
-    if hum and hum.Health > 0 then
-        return hum
-    end
-end
-
--- Função: sempre acha o MAIS PRÓXIMO (atualiza sempre)
-local function getClosestTarget()
-    local cam = workspace.CurrentCamera
-    local closestPlayer = nil
-    local shortestDist = math.huge
-
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            local hum = getHumanoid(p.Character)
-            local head = getHead(p.Character)
-
-            if hum and head then
-                local screenPos, onScreen = cam:WorldToViewportPoint(head.Position)
-                if onScreen then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y) - cam.ViewportSize / 2).Magnitude
-                    if dist < shortestDist then
-                        shortestDist = dist
-                        closestPlayer = p
-                    end
-                end
-            end
-        end
-    end
-
-    return closestPlayer
-end
-
--- SLIDER DO AIMBOT
-createSlider(menuFrame, "Aimbot", 0, 100, 0, function(val)
-    aimbotValue = val
-
-    if val == 0 then
-        aiming = false
-        RunService:UnbindFromRenderStep(AIM_RENDER_NAME)
-        return
-    end
-
-    if aiming then return end
-    aiming = true
-
-    RunService:BindToRenderStep(AIM_RENDER_NAME, Enum.RenderPriority.Camera.Value + 1, function()
-        local target = getClosestTarget()
-        if not target then return end
-
-        local char = target.Character
-        local head = char and getHead(char)
-        if not head then return end
-
-        local cam = workspace.CurrentCamera
-        local camPos = cam.CFrame.Position
-
-        -- Reduz o movimento vertical (anti-pinar)
-        local targetPos = head.Position
-        local deltaY = targetPos.Y - camPos.Y
-        targetPos = Vector3.new(
-            targetPos.X,
-            camPos.Y + (deltaY * (1 - AIM_VERTICAL_REDUCE)),
-            targetPos.Z
-        )
-
-        local newCF = CFrame.new(camPos, targetPos)
-        cam.CFrame = cam.CFrame:Lerp(newCF, aimbotValue / 100)
-    end)
-end, 50)
-
--- IMORTAL ON/OFF
 local imortal = false
-local imortalBtn = Instance.new("TextButton")
-imortalBtn.Size = UDim2.new(1,-20,0,40)
-imortalBtn.Position = UDim2.new(0,10,0,100)
-imortalBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
-imortalBtn.Text = "Regeneration (OFF)"
-imortalBtn.TextColor3 = Color3.new(1,1,1)
-imortalBtn.Font = Enum.Font.GothamBold
-imortalBtn.TextSize = 20
-imortalBtn.Parent = menuFrame
 
-imortalBtn.MouseButton1Click:Connect(function()
-    imortal = not imortal
-    if imortal then
-        imortalBtn.BackgroundColor3 = Color3.fromRGB(0,255,0)
-        imortalBtn.Text = "Regeneration (ON)"
-        task.spawn(function()
-            while imortal do
-                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                    LocalPlayer.Character.Humanoid.Health = 10000
-                end
-                task.wait(0.001)
+local function applyImmortal()
+    while imortal do
+        local char = LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.MaxHealth = math.huge
+                hum.Health = math.huge
+
+                -- remove estados de morte/dano
+                hum:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+                hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+                hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
             end
-        end)
-    else
-        imortalBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
-        imortalBtn.Text = "Regeneration (OFF)"
+        end
+        task.wait()
     end
-end)
+end
 
--- BRINGTOME ON/OFF
-local bringActive = false
-local bringBtn = Instance.new("TextButton")
-bringBtn.Size = UDim2.new(1,-20,0,40)
-bringBtn.Position = UDim2.new(0,10,0,150)
-bringBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
-bringBtn.Text = "BringToMe (OFF)"
-bringBtn.TextColor3 = Color3.new(1,1,1)
-bringBtn.Font = Enum.Font.GothamBold
-bringBtn.TextSize = 20
-bringBtn.Parent = menuFrame
-
-bringBtn.MouseButton1Click:Connect(function()
-    bringActive = not bringActive
-    if bringActive then
-        bringBtn.BackgroundColor3 = Color3.fromRGB(0,255,0)
-        bringBtn.Text = "BringToMe (ON)"
-    else
-        bringBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
-        bringBtn.Text = "BringToMe (OFF)"
-    end
-end)
-
--- ESP ON/OFF
+--==================================================
+-- 🎯 ESP MELHORADO
+--==================================================
 local espActive = false
-local espBtn = Instance.new("TextButton")
-espBtn.Size = UDim2.new(1,-20,0,40)
-espBtn.Position = UDim2.new(0,10,0,200)
-espBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
-espBtn.Text = "ESP Players (OFF)"
-espBtn.TextColor3 = Color3.new(1,1,1)
-espBtn.Font = Enum.Font.GothamBold
-espBtn.TextSize = 20
-espBtn.Parent = menuFrame
-
-espBtn.MouseButton1Click:Connect(function()
-    espActive = not espActive
-    if espActive then
-        espBtn.BackgroundColor3 = Color3.fromRGB(0,255,0)
-        espBtn.Text = "ESP Players (ON)"
-    else
-        espBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
-        espBtn.Text = "ESP Players (OFF)"
-    end
-end)
-
--- Função ESP
 local espData = {}
-local function createESP(player)
+
+local function applyESP(player)
     if player == LocalPlayer then return end
-    player.CharacterAdded:Connect(function(char)
-        repeat task.wait() until char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Head")
-        
+
+    local function create(char)
+        if not espActive then return end
+
         if espData[char] then
             espData[char]:Destroy()
-            espData[char] = nil
         end
-        if not espActive then return end
 
         local hl = Instance.new("Highlight")
         hl.FillColor = Color3.fromRGB(0,255,255)
         hl.OutlineColor = Color3.fromRGB(255,255,255)
         hl.FillTransparency = 0.5
-        hl.OutlineTransparency = 0
         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         hl.Adornee = char
         hl.Parent = char
+
         espData[char] = hl
+    end
 
-        local bill = Instance.new("BillboardGui")
-        bill.Name = "ESP_Billboard"
-        bill.Adornee = char.Head
-        bill.AlwaysOnTop = true
-        bill.Size = UDim2.new(4,0,2,0)
-        bill.StudsOffset = Vector3.new(0,3,0)
-        bill.Parent = char.Head
+    if player.Character then
+        create(player.Character)
+    end
 
-        local frame = Instance.new("Frame", bill)
-        frame.Size = UDim2.new(1,0,1,0)
-        frame.BackgroundTransparency = 1
-
-        local image = Instance.new("ImageLabel", frame)
-        image.Size = UDim2.new(0.35,0,1,0)
-        image.Position = UDim2.new(0,0,0,0)
-        image.BackgroundTransparency = 1
-        local thumb, isReady = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-        if isReady then
-            image.Image = thumb
-        end
-
-        local text = Instance.new("TextLabel", frame)
-        text.Size = UDim2.new(0.65,0,1,0)
-        text.Position = UDim2.new(0.35,0,0,0)
-        text.BackgroundTransparency = 1
-        text.TextColor3 = Color3.new(1,1,1)
-        text.TextScaled = true
-        text.Font = Enum.Font.GothamBold
-        text.Text = player.Name
-
-        task.spawn(function()
-            while char.Parent and espActive do
-                local root = char:FindFirstChild("HumanoidRootPart")
-                if root and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    text.Text = player.Name .. "\n" .. math.floor(dist) .. "m"
-                end
-                task.wait(0.5)
-            end
-        end)
-    end)
+    player.CharacterAdded:Connect(create)
 end
 
-for _, p in ipairs(Players:GetPlayers()) do
-    createESP(p)
+for _,p in pairs(Players:GetPlayers()) do
+    applyESP(p)
 end
-Players.PlayerAdded:Connect(createESP)
 
--- LOOP BringToMe
+Players.PlayerAdded:Connect(applyESP)
+
+--==================================================
+-- 🧲 BRING (ESTABILIZADO)
+--==================================================
+local bringActive = false
+
 RunService.RenderStepped:Connect(function()
     if bringActive and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local myPos = LocalPlayer.Character.HumanoidRootPart.CFrame + (Camera.CFrame.LookVector * 5)
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                player.Character.HumanoidRootPart.CFrame = CFrame.new(myPos.Position)
+        local myPos = LocalPlayer.Character.HumanoidRootPart.Position + (Camera.CFrame.LookVector * 6)
+
+        for _,p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hrp = p.Character.HumanoidRootPart
+
+                -- suaviza ao invés de teleportar seco
+                hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(myPos), 0.4)
             end
         end
     end
 end)
 
--- ABRIR / FECHAR MENU
-buttonCircle.MouseButton1Click:Connect(function()
-    menuFrame.Visible = not menuFrame.Visible
+--==================================================
+-- 🧠 BOTÕES (INTEGRAÇÃO COM SEU MENU)
+--==================================================
+
+-- IMORTAL BUTTON (substitui o antigo)
+imortalBtn.MouseButton1Click:Connect(function()
+    imortal = not imortal
+
+    if imortal then
+        imortalBtn.BackgroundColor3 = Color3.fromRGB(0,255,0)
+        imortalBtn.Text = "Immortal (ON)"
+        task.spawn(applyImmortal)
+    else
+        imortalBtn.BackgroundColor3 = Color3.fromRGB(255,0,0)
+        imortalBtn.Text = "Immortal (OFF)"
+    end
+end)
+
+-- ESP BUTTON
+espBtn.MouseButton1Click:Connect(function()
+    espActive = not espActive
+
+    espBtn.BackgroundColor3 = espActive and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+
+    if espActive then
+        for _,p in pairs(Players:GetPlayers()) do
+            if p.Character then
+                applyESP(p)
+            end
+        end
+    else
+        for _,v in pairs(espData) do
+            v:Destroy()
+        end
+        espData = {}
+    end
+end)
+
+-- BRING BUTTON
+bringBtn.MouseButton1Click:Connect(function()
+    bringActive = not bringActive
+    bringBtn.BackgroundColor3 = bringActive and Color3.fromRGB(0,255,0) or Color3.fromRGB(255,0,0)
+end)
+
+--==================================================
+-- 📦 DROPKICK (ADICIONADO)
+--==================================================
+pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/LolnotaKid/JkDropKuck/refs/heads/main/Protected_3923618848403366.txt"))()
 end)
